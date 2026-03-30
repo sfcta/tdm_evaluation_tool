@@ -1,0 +1,71 @@
+# raw
+[raw]
+PATH                   = ./data/raw
+DBI                    = dbi_requests_2023-08-07.csv
+LOT                    = LandUse2020.shp
+TAZ_AMS                = taz_ams.csv
+TAZSHP                 = TAZ2454_clean.shp
+PARKMERCED_LOTS        = ParkmercedParcels.csv
+WALKSKIMS              = walkSkim.h5
+TRANSITSKIMDIR         = X:/Projects/DTX/CaltrainValidation/s8_2019_Base
+TAZDATA                = tazdata.dbf
+TDM_FILE               = tdm_inventory_2023.xlsx
+TDM_PROJECT_SHEET      = project
+TDM_LOT_SHEET          = project_parcels
+ZIP                    = San Francisco ZIP Codes.shp
+
+[survey]
+dir = 
+[survey.hh]
+file = 
+weight
+[survey.person]
+file = 
+weight = 
+
+# interim
+[interim]
+PATH                   = ./data/interim
+DBI                    = dbi_parking.csv
+DBI_PARKING_RATES      = dbi_parking_rates.csv
+DBI_PARKING_MODEL      = dbi_parking_model.csv
+LOT                    = lot.csv
+LOT_PARKING_RATES      = lot_parking_rates.csv
+LOT_TO_TAZ             = lot_to_taz.csv
+LOT_TO_ZIP             = lot_to_zip.csv
+LOT_TO_MAZ             = Q:/Model Projects/ATG/TSS Task Force/Parking Supply/shapefiles/parcel_to_maz_2013.dbf
+TDM_LOT                = tdm_lots.csv
+TDM 				   = tdm.csv
+TAZDATA                = tazdata.csv
+WALK_IMPEDANCE         = walk_impedance.csv
+TRANSIT_IMPEDANCE      = transit_impedance.csv
+WALK_ACCESS        	   = walk_access.csv
+TRANSIT_ACCESS         = transit_access.csv
+TAZ_PARKING            = taz_parking_estimate.csv
+
+# processed
+[processed]
+PATH                   = ./data/processed
+RECRUIT_LIST_TDM       = tdm_to_recruit.csv
+RECRUIT_LIST_DBI       = dbi_to_recruit.csv
+
+# params
+[parking_params]
+STANDARD_PARKING_SPACE_LENGTH = 17.0
+STANDARD_PARKING_SPACE_WIDTH  = 9.0
+STANDARD_PARKING_SPACE_SQFT   = 144
+COMPACT_PARKING_SPACE_LENGTH  = 17.0
+COMPACT_PARKING_SPACE_WIDTH   = 7.5
+COMPACT_PARKING_SPACE_SQFT    = 112
+
+[access_params]
+# utils per minute (-11.8 utils per mile, at 3mph)
+WALK_TIME_COEFFICIENT         = -0.59
+# longest walk time
+WALK_TIME_THRESHOLD           = 15
+# utils per minute (-11.8 utils per mile, at 3mph, divided by 3 again to convert walk->trn)
+TRANSIT_TIME_COEFFICIENT      = -0.197
+# longest transit time
+TRANSIT_TIME_THRESHOLD        = 45
+DESTINATION_FILE              = .\data\interim\tazdata.csv
+DESTINATION_FIELD             = totalemp
