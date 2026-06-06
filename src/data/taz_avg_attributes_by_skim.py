@@ -19,8 +19,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
+import polars as pl
 
 sys.path.insert(0, r"Y:\champ\dev\7CE.0.0_dev\lib")
 import Lookups
@@ -49,79 +48,79 @@ if __name__ == "__main__":
             if tpnum_start <= tpnum_end:
                 TIMEPERIOD_DURATIONS.append("%s-%s" % (tp_start, tp_end))
 
-    tazdata_df = pd.read_csv(
+    tazdata_df = pl.read_csv(
         taz_data_filepath,
-        usecols=["taz", "spaces_est", "resunits"],
+        columns=["taz", "spaces_est", "resunits"],
         # do not include parking_rate_est because it has to be recalculated after
         # grouping to each neighborhood and summing spaces_est and resunits
     )
 
     # 2. Sum to TAZ
-    net_average_bytaz = tazdata_df.groupby(
-        by=config["neighborhood_average_params"]["KEY_FIELD"]
-    ).sum()
+    neighborhood_sums = tazdata_df.group_by(
+        config["neighborhood_average_params"]["KEY_FIELD"]
+    ).agg(pl.col(config["neighborhood_average_params"]["FIELDS_TO_SUM"]).sum())
+
     # Read Walk Distances from Skims
     walk_skim = SkimUtil.WalkSkim(walk_skim_dir)
     walk_dist = walk_skim.getSkimTable("DISTANCE")
 
     results = []  # list of dictionaries
     for home_taz in range(1, Lookups.MAX_SF_ZONE + 1):
-        result_dict = {}
         # in miles
         walk_distances = walk_dist[: Lookups.MAX_SF_ZONE, home_taz - 1]  # 0-index
-        dest_df = pd.DataFrame(
-            {
-                "Walk Distance": walk_distances,
-                "Nearby TAZ": range(1, 1 + len(walk_distances)),
-            }
-        ).set_index("Nearby TAZ")
-
-        # filters
-        dest_df = dest_df.loc[
-            (
-                # Filter out unreachable
-                (dest_df["Walk Distance"] > 0.0)  # 0 distance: unreachable TAZ
-                &
-                # Filter to Parking TAZs within distance threshold of the destination
-                (
-                    dest_df["Walk Distance"]
-                    <= config["neighborhood_average_params"]["DISTANCE_TRESHOLD"]
-                )
+        nearby_tazs = (
+            pl.DataFrame(
+                {
+                    "Nearby TAZ": range(1, 1 + len(walk_distances)),
+                    "Walk Distance": walk_distances,
+                }
             )
-            | (dest_df.index == home_taz)
-        ]
-        if len(dest_df) == 0:
-            # print "0 walking distance TAZs -- skipping"
-            continue
-
-        dest_df["Distance Term"] = np.exp(
-            config["neighborhood_average_params"]["DISTANCE_COEFFICIENT"]
-            * dest_df["Walk Distance"]
+            .filter(
+                (
+                    # Filter out unreachable
+                    (pl.col("Walk Distance") > 0.0)  # 0 distance: unreachable TAZ
+                    &
+                    # Filter to Parking TAZs within distance threshold of the destination
+                    (
+                        pl.col("Walk Distance")
+                        <= config["neighborhood_average_params"]["DISTANCE_TRESHOLD"]
+                    )
+                )
+                | (pl.col("Nearby TAZ") == home_taz)
+            )
+            .with_columns(
+                distance_adjustment=(
+                    pl.col("Walk Distance")
+                    * config["neighborhood_average_params"]["DISTANCE_COEFFICIENT"]
+                ).exp()
+            )
         )
-
-        assert pd.isnull(dest_df["Walk Distance"]).sum() == 0
+        if nearby_tazs.height == 0:
+            # print("0 walking distance TAZs: skipping")
+            continue
+        assert nearby_tazs.select("Walk Distance").null_count() == 0
         # print "Destination TAZ %3d" % home_taz
         # print "  %3d Parking TAZs within %.2f miles" % (len(dest_df), config["DISTANCE_TRESHHOLD"])
-        result_dict["TAZ"] = home_taz
-        result_dict["CountOfNearbyTAZs"] = len(dest_df)
 
         # Identify distance to all sites within distance threshold
         # Join with Off-Street info
-        dest_df = pd.merge(
-            left=dest_df,
-            right=net_average_bytaz,
-            left_index=True,
-            right_index=True,
-            how="left",
+        nearby_tazs = nearby_tazs.join(
+            neighborhood_sums, left_on="Nearby TAZ", right_on="TAZ", how="left"
         )
         # sum fields in config["neighborhood_average_params"]["FIELDS_TO_SUM"]
-        for field in config["neighborhood_average_params"]["FIELDS_TO_SUM"]:
-            # TODO verify: shouldn't be needed!:
-            # # Fill in NaN Off-Street Capacity with default
-            # dest_df.loc[pd.isnull(dest_df[field]), field] = config[
-            #     "neighborhood_average_params"
-            # ]["NA_DEFAULT"]
-            result_dict[field] = dest_df[field].sum()
+        # for field in config["neighborhood_average_params"]["FIELDS_TO_SUM"]:
+        #     TODO verify: shouldn't be needed! if this is needed, probably do fill_nan:
+        #     # Fill in NaN Off-Street Capacity with default
+        #     dest_df.loc[pd.isnull(dest_df[field]), field] = config[
+        #         "neighborhood_average_params"
+        #     ]["NA_DEFAULT"]
+        result_dict = {
+            "TAZ": home_taz,
+            "CountOfNearbyTAZs": nearby_tazs.height,
+        } | {
+            col: nearby_tazs[col].sum().item()
+            for col in config["neighborhood_average_params"]["FIELDS_TO_SUM"]
+        }
 
         # HOTFIX hardcoded, instead of set in config toml
         result_dict["parking_ratio_nodistancedecay"] = (
@@ -130,7 +129,7 @@ if __name__ == "__main__":
 
         results.append(result_dict)
 
-    result_df = pd.DataFrame(results)
+    result_df = pl.DataFrame(results)
     # reorder columns
     cols = ["TAZ", "CountOfNearbyTAZs"]
     for field in config["neighborhood_average_params"]["FIELDS_TO_SUMMARIZE"]:
