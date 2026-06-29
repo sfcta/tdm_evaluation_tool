@@ -1,3 +1,6 @@
+"""Used to create config["interim"]["TAZ_PARKING"],
+i.e. data\interim\taz_parking_estimate.csv"""
+
 # -*- coding: utf-8 -*-
 import click
 import logging
