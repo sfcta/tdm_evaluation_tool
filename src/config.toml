@@ -1,53 +1,56 @@
+data_dir = "Q:/Model Research/TSP Evaluation Tool/Phase I/3-Data/tdm_evaluation_tool-data"
+
 # raw
 [raw]
-PATH                   = ./data/raw
-DBI                    = dbi_requests_2023-08-07.csv
-LOT                    = LandUse2020.shp
-TAZ_AMS                = taz_ams.csv
-TAZSHP                 = TAZ2454_clean.shp
-PARKMERCED_LOTS        = ParkmercedParcels.csv
-WALKSKIMS              = walkSkim.h5
-TRANSITSKIMDIR         = X:/Projects/DTX/CaltrainValidation/s8_2019_Base
-TAZDATA                = tazdata.dbf
-TDM_FILE               = tdm_inventory_2023.xlsx
-TDM_PROJECT_SHEET      = project
-TDM_LOT_SHEET          = project_parcels
-ZIP                    = San Francisco ZIP Codes.shp
+PATH                   = "raw"  # relative to data_dir
+DBI                    = "dbi_requests_2023-08-07.csv"
+LOT                    = "LandUse2020.shp"
+TAZ_AMS                = "taz_ams.csv"
+TAZSHP                 = "TAZ2454_clean.shp"
+PARKMERCED_LOTS        = "ParkmercedParcels.csv"
+WALKSKIMS              = "walkSkim.h5"
+TRANSITSKIMDIR         = "X:/Projects/DTX/CaltrainValidation/s8_2019_Base"
+TAZDATA                = "tazdata.dbf"
+TDM_FILE               = "tdm_inventory_2023.xlsx"
+TDM_PROJECT_SHEET      = "project"
+TDM_LOT_SHEET          = "project_parcels"
+ZIP                    = "San Francisco ZIP Codes.shp"
 
 [survey]
-dir = 
+dir = ""
 [survey.hh]
-file = 
-weight
+file = ""
+weight = ""
 [survey.person]
-file = 
-weight = 
+file = ""
+weight = ""
 
 # interim
 [interim]
-PATH                   = ./data/interim
-DBI                    = dbi_parking.csv
-DBI_PARKING_RATES      = dbi_parking_rates.csv
-DBI_PARKING_MODEL      = dbi_parking_model.csv
-LOT                    = lot.csv
-LOT_PARKING_RATES      = lot_parking_rates.csv
-LOT_TO_TAZ             = lot_to_taz.csv
-LOT_TO_ZIP             = lot_to_zip.csv
-LOT_TO_MAZ             = Q:/Model Projects/ATG/TSS Task Force/Parking Supply/shapefiles/parcel_to_maz_2013.dbf
-TDM_LOT                = tdm_lots.csv
-TDM 				   = tdm.csv
-TAZDATA                = tazdata.csv
-WALK_IMPEDANCE         = walk_impedance.csv
-TRANSIT_IMPEDANCE      = transit_impedance.csv
-WALK_ACCESS        	   = walk_access.csv
-TRANSIT_ACCESS         = transit_access.csv
-TAZ_PARKING            = taz_parking_estimate.csv
+PATH                   = "interim"  # relative to data_dir
+DBI                    = "dbi_parking.csv"
+DBI_PARKING_RATES      = "dbi_parking_rates.csv"
+DBI_PARKING_MODEL      = "dbi_parking_model.csv"
+LOT                    = "lot.csv"
+LOT_PARKING_RATES      = "lot_parking_rates.csv"
+LOT_TO_TAZ             = "lot_to_taz.csv"
+LOT_TO_ZIP             = "lot_to_zip.csv"
+LOT_TO_MAZ             = "Q:/Model Projects/ATG/TSS Task Force/Parking Supply/shapefiles/parcel_to_maz_2013.dbf"
+TDM_LOT                = "tdm_lots.csv"
+TDM 				   = "tdm.csv"
+TAZDATA                = "tazdata.csv"
+WALK_IMPEDANCE         = "walk_impedance.csv"
+TRANSIT_IMPEDANCE      = "transit_impedance.csv"
+WALK_ACCESS        	   = "walk_access.csv"
+TRANSIT_ACCESS         = "transit_access.csv"
+TAZ_PARKING            = "taz_parking_estimate.csv"
+NEIGHBORHOOD_PARKING   = "neighborhood_parking_estimate.csv"
 
 # processed
 [processed]
-PATH                   = ./data/processed
-RECRUIT_LIST_TDM       = tdm_to_recruit.csv
-RECRUIT_LIST_DBI       = dbi_to_recruit.csv
+PATH                   = "processed"  # relative to data_dir
+RECRUIT_LIST_TDM       = "tdm_to_recruit.csv"
+RECRUIT_LIST_DBI       = "dbi_to_recruit.csv"
 
 # params
 [parking_params]
@@ -67,5 +70,12 @@ WALK_TIME_THRESHOLD           = 15
 TRANSIT_TIME_COEFFICIENT      = -0.197
 # longest transit time
 TRANSIT_TIME_THRESHOLD        = 45
-DESTINATION_FILE              = .\data\interim\tazdata.csv
-DESTINATION_FIELD             = totalemp
+DESTINATION_FILE              = "interim/tazdata.csv"
+DESTINATION_FIELD             = "totalemp"
+
+[neighborhood_average_params]
+KEY_FIELD = "taz"
+FIELDS_TO_SUM = ["spaces_est", "resunits"]
+DISTANCE_COEFFICIENT = -11.8  # utils per mile  # this is the coefficient for the exponential decay
+DISTANCE_TRESHOLD = 0.75  # longest distance to parking  # things over the threshold are excluded
+NULL_DEFAULT = 0  # for TAZs with no data
